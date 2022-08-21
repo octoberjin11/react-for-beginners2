@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
 
 function Hello() {
-  useEffect(() => {
+  function byFn() {
+    console.log("bye :(");
+  }
+  function hiFn() {
     console.log("created :)");
-    return () => console.log("destroyed :("); // Cleanup function : component가 destroy 될 때 실행함.
-  }, []);
+    return byFn;
+  }
+
+  useEffect(hiFn, []);
 
   return <h1>Hello</h1>;
 }
