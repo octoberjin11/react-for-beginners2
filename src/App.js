@@ -1,43 +1,72 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import CalBox from "./CalBox";
 
 function App() {
-  const [toDo, setToDo] = useState("");
-  const [toDos, setToDos] = useState([]);
-  const onChange = (event) => setToDo(event.target.value);
-  const onSubmit = (event) => {
-    event.preventDefault();
-    if (toDo === "") {
-      return;
-    }
-    setToDo("");
-    setToDos((currentArray) => [toDo, ...currentArray]); // ...을 써서 currentArray 배열에 toDo를 추가 시켜줌
+  const [loading, setLoading] = useState(true);
+  const [coins, setCoins] = useState([]);
+  const [select, setSelect] = useState(0);
+  const [unit, setUnit] = useState(1);
+  const [inverted, setInverted] = useState(false);
+  const onChange = (event) => {
+    setSelect(event.target.value);
   };
-  console.log(toDos);
-
-  // map은 하나의 array에 있는 item을 내가 원하는 무엇이든지로 바꿔주는 역할. 그건 결국 새로운 array로 반환해준다.
-
-  // 같은 component의 list를 render 할 때 key라는 prop을 넣어줘야 한다. 이건 그냥 react가 기본적으로 list에 있는 모든 item들을 인식하기 때문이다.
-  // 리액트는 기본적으로 list에 있는 모든 item을 인식하기 때문에 key를 넣어 고유하게 만들어줘야함
-  // map의 첫 번째 argument는 값이고 두번째는 index 즉 숫자를 의미함
+  const onChangePrice = (event) => {
+    setUnit(event.target.value);
+  };
+  const onClickBtn = () => {
+    setInverted((prev) => !prev);
+    setUnit(1);
+  };
+  // 처음 새로고침했을 때 한번만 실행되야 하니까,
+  // useEffect((익명) 함수 (리턴값은 destroy 될때 실행될 함수), dependencies)
+  useEffect(() => {
+    fetch("https://api.coinpaprika.com/v1/tickers")
+      .then((response) => response.json())
+      .then((json) => {
+        setCoins(json);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <div>
-      <h1>Mt To Dos ({toDos.length})</h1>
-      <form onSubmit={onSubmit}>
-        <input
-          onChange={onChange}
-          value={toDo}
-          type="text"
-          placeholder="Write your to do..."
-        />
-        <button>Add to Do</button>
-      </form>
-      <hr />
-      <ul>
-        {toDos.map((item, index) => (
-          <li key={index}>{item}</li>
-        ))}
-      </ul>
+      <h1>🧮 Cryptocurrency Calculator</h1>
+      {loading ? (
+        <h3> 🤔 Loading... </h3>
+      ) : (
+        <>
+          <select value={select} onChange={onChange}>
+            {coins.map(({ id, name }, index) => (
+              <option value={index} key={id}>
+                {name}
+              </option>
+            ))}
+          </select>
+          <hr />
+          <CalBox
+            onChange={onChangePrice}
+            label="USD"
+            value={
+              inverted
+                ? (unit * coins[select].quotes.USD.price).toFixed(6)
+                : unit
+            }
+            disabled={inverted}
+          />
+          <div>⏬</div>
+          <CalBox
+            onChange={onChangePrice}
+            label={coins[select].symbol}
+            value={
+              inverted
+                ? unit
+                : (unit / coins[select].quotes.USD.price).toFixed(6)
+            }
+            disabled={!inverted}
+          />
+          <button onClick={onClickBtn}>Convert</button>
+        </>
+      )}
     </div>
   );
 }
