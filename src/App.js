@@ -1,74 +1,22 @@
 import { useEffect, useState } from "react";
-import CalBox from "./CalBox";
 
 function App() {
   const [loading, setLoading] = useState(true);
-  const [coins, setCoins] = useState([]);
-  const [select, setSelect] = useState(0);
-  const [unit, setUnit] = useState(1);
-  const [inverted, setInverted] = useState(false);
-  const onChange = (event) => {
-    setSelect(event.target.value);
-  };
-  const onChangePrice = (event) => {
-    setUnit(event.target.value);
-  };
-  const onClickBtn = () => {
-    setInverted((prev) => !prev);
-    setUnit(1);
-  };
-  // 처음 새로고침했을 때 한번만 실행되야 하니까,
-  // useEffect((익명) 함수 (리턴값은 destroy 될때 실행될 함수), dependencies)
+  const [movies, setMovies] = useState([]);
   useEffect(() => {
-    fetch("https://api.coinpaprika.com/v1/tickers")
+    fetch(
+      "https://yts.mx/api/v2/list_movies.json?minimum_rating=8.5&sort_by=year"
+    )
       .then((response) => response.json())
       .then((json) => {
-        setCoins(json);
+        setMovies(json.data.movies);
         setLoading(false);
       });
   }, []);
 
-  return (
-    <div>
-      <h1>🧮 Cryptocurrency Calculator</h1>
-      {loading ? (
-        <h3> 🤔 Loading... </h3>
-      ) : (
-        <>
-          <select value={select} onChange={onChange}>
-            {coins.map(({ id, name }, index) => (
-              <option value={index} key={id}>
-                {name}
-              </option>
-            ))}
-          </select>
-          <hr />
-          <CalBox
-            onChange={onChangePrice}
-            label="USD"
-            value={
-              inverted
-                ? (unit * coins[select].quotes.USD.price).toFixed(6)
-                : unit
-            }
-            disabled={inverted}
-          />
-          <div>⏬</div>
-          <CalBox
-            onChange={onChangePrice}
-            label={coins[select].symbol}
-            value={
-              inverted
-                ? unit
-                : (unit / coins[select].quotes.USD.price).toFixed(6)
-            }
-            disabled={!inverted}
-          />
-          <button onClick={onClickBtn}>Convert</button>
-        </>
-      )}
-    </div>
-  );
+  console.log(movies);
+
+  return <div>{loading ? <h1> 🤔 Loading... </h1> : null}</div>;
 }
 
 export default App;
