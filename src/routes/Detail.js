@@ -1,27 +1,73 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useParams } from "react-router-dom";
-
-// useParams 함수를 사용하면 React Router는 바로 이 변수(여기에서는 <Link to={`/movie/${id}`}>{title}</Link>의 id)의 값을 넘겨준다.
-
-// packages.json 에서
-// "deploy": "gh-pages -d build"
-// deploy가 하는 일은 우리가 방금 설치한 gh-pages를 실행시키고, build라는 디렉토리를 가져가는 것이다.
-// gh-pages -d build에서 gh-pages가 하는 일은 gh-pages가 build 폴더를 homepage에 적어놓은 웹사이트에 업로드하도록 하는 것이다.
-// "predeploy": "npm run build"
-//먼저 build를 하고 난 다음에 deploy를 해야 한다는걸 기억하고 싶지 않기 때문에 predeploy command를 만들어 준다. 그럼 deploy를 실행시키면 predeploy가 자동으로 먼저 실행이 되고 predeploy는 npm run build를 실행시킨다.
+import styles from "./Detail.module.css";
 
 function Detail() {
+  const [loading, setLoading] = useState(true);
+  const [movie, setMovie] = useState([]);
+
+  // react-router-dom을 이용해 id값을 찾아 온다.
   const { id } = useParams();
-  const getMovie = async () => {
-    const json = await (
-      await fetch(`https://yts.mx/api/v2/movie_details.json?movie_id=${id}`)
-    ).json();
+
+  const getMovie = useCallback(async () => {
+    const json =
+      await // id값을 알고 있기 때문에 API로 부터 정보를 fetch 해올 수 있다.
+      (
+        await fetch(`https://yts.mx/api/v2/movie_details.json?movie_id=${id}`)
+      ).json();
     console.log(json);
-  };
+
+    setMovie(json.data.movie);
+    setLoading(false);
+  }, [id]);
+
   useEffect(() => {
-    getMovie();
-  }, []);
-  return <h1>Detail</h1>;
+    if (id !== "" && id.length > 1) {
+      getMovie();
+    }
+  }, [getMovie, id]); //  React Hook useEffect has missing dependencies: 'getMovie' and 'id'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  console.log(movie);
+
+  return (
+    <div className={styles.container}>
+      {/* <h1>Detail</h1> */}
+      {loading ? (
+        <div className={styles.loader}>
+          <span>Loading...</span>
+        </div>
+      ) : (
+        <div>
+          <div className={styles.detail}>
+            <img
+              src={movie.large_cover_image}
+              alt={movie.large_cover_image}
+              className={styles.movie_img}
+            />
+            <div>
+              <div className={styles.home_button}>
+                <button type="button">
+                  <Link
+                    to={`${process.env.PUBLIC_URL}/`}
+                    style={{ color: "white", textDecoration: "none" }}
+                  >
+                    Home
+                  </Link>
+                </button>
+              </div>
+              <h2 className={styles.movie_title}>
+                {movie.title} ({movie.year})
+              </h2>
+              <p className={styles.movie_summary}>{movie.description_full}</p>
+              <ul className={styles.movie_genres}>
+                {movie.genres && movie.genres.map((g) => <li key={g}>{g}</li>)}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default Detail;
